@@ -1,16 +1,17 @@
 package nucleus
 
 import com.austinv11.servicer.WireService
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
+import com.github.benmanes.caffeine.cache.AsyncCache
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import discord4j.rest.util.Snowflake
-import discord4j.store.api.util.LongLongTuple2
 import harmony.Harmony
 import harmony.command.CommandOptions
 import harmony.command.command
 import harmony.command.interfaces.HarmonyEntryPoint
 import harmony.command.interfaces.PrefixProvider
 import harmony.util.Feature
+import nucleus.util.DB
 import nucleus.util.fileExists
 import nucleus.util.open
 import reactor.core.publisher.Mono
@@ -22,53 +23,51 @@ fun main(args: Array<String>) {
     Harmony(args[0], Feature.enable(CommandOptions())).awaitClose()
 }
 
-data class IdPrefixPair(val id: Long, val prefix: String?)
-
-data class PrefixConfig(val dms: Array<IdPrefixPair>, val guilds: Array<IdPrefixPair>)
+const val DEFAULT_PREFIX = "?"
 
 object ConfigurablePrefixProvider : PrefixProvider {
-    private val gson = GsonBuilder().setPrettyPrinting().create() //FIXME: this won't scale
 
-    private val guildPrefixes = HashMap<Long, String?>()
-    private val dmPrefixes = HashMap<Long, String?>()
+    val guildPrefixCache: Cache<Long, Optional<String>> = Caffeine.newBuilder()
+            .maximumSize(1000)
+            .build()
+    val dmPrefixCache: Cache<Long, Optional<String>> = Caffeine.newBuilder()
+            .maximumSize(100)
+            .build()
 
-    init {
-        if (fileExists("prefixes.json")) { // TODO: Make a volume in Dockerfile
-            open("prefixes.json", 'r') { f ->
-                val config = gson.fromJson(f.read(), PrefixConfig::class.java)!!
-                config.dms.forEach { pair ->
-                    setDmPrefix(Snowflake.of(pair.id), pair.prefix)
+    override fun getDmPrefix(authorId: Snowflake): Optional<String> {
+        val dmPrefix = dmPrefixCache.getIfPresent(authorId.asLong())
+
+        if (dmPrefix != null) return dmPrefix
+
+        return DB.getPrefix(authorId)
+                .switchIfEmpty(Mono.just(Optional.of(DEFAULT_PREFIX)))
+                .doOnNext {
+                    dmPrefixCache.put(authorId.asLong(), it)
                 }
-                config.guilds.forEach { pair ->
-                    setDmPrefix(Snowflake.of(pair.id), pair.prefix)
-                }
-            }
-        }
+                .block()!!
     }
 
-    override fun getDmPrefix(authorId: Snowflake)
-            = Optional.ofNullable(dmPrefixes.getOrDefault(authorId.asLong(), ">"))
+    override fun getGuildPrefix(guildId: Snowflake, channelId: Snowflake): Optional<String> {
+        val guildPrefix = guildPrefixCache.getIfPresent(guildId.asLong())
 
-    override fun getGuildPrefix(guildId: Snowflake, channelId: Snowflake)
-            = Optional.ofNullable(guildPrefixes.getOrDefault(guildId.asLong(), ">"))
+        if (guildPrefix != null) return guildPrefix
 
-    @Synchronized
+        return DB.getPrefix(guildId)
+                .switchIfEmpty(Mono.just(Optional.of(DEFAULT_PREFIX)))
+                .doOnNext {
+                    guildPrefixCache.put(guildId.asLong(), it)
+                }
+                .block()!!
+    }
+
     fun setDmPrefix(authorId: Snowflake, prefix: String?) {
-        dmPrefixes[authorId.asLong()] = prefix
-        save()
+        DB.setPrefix(prefix, false, authorId)
+                .subscribe { dmPrefixCache.put(authorId.asLong(), Optional.ofNullable(prefix)) }
     }
 
-    @Synchronized
     fun setGuildPrefix(guildId: Snowflake, prefix: String?) {
-        guildPrefixes[guildId.asLong()] = prefix
-        save()
-    }
-
-    fun save() {
-        open("prefixes.json", 'w') { f ->
-            f.write(gson.toJson(PrefixConfig(dmPrefixes.map { IdPrefixPair(it.key, it.value) }.toTypedArray(),
-                guildPrefixes.map { IdPrefixPair(it.key, it.value) }.toTypedArray())))
-        }
+        DB.setPrefix(prefix, true, guildId)
+                .subscribe { guildPrefixCache.put(guildId.asLong(), Optional.ofNullable(prefix)) }
     }
 }
 
@@ -84,7 +83,7 @@ class NucleusEntryPoint : HarmonyEntryPoint {
     override fun startBot(harmony: Harmony): HarmonyEntryPoint.ExitSignal {
         harmony.owner.privateChannel.flatMap { it.createMessage("I've just started up!") }.subscribe()
 
-        return harmony.client.onDisconnect()
+        val exit = harmony.client.onDisconnect()
             .map { HarmonyEntryPoint.ExitSignal.COMPLETE_CLOSE }
             .onErrorContinue { t, u -> HarmonyEntryPoint.ExitSignal.ABNORMAL_CLOSE }
             .or(Mono.create { sink ->
@@ -97,6 +96,7 @@ class NucleusEntryPoint : HarmonyEntryPoint {
 
                         handle {
                             context.channel.createMessage("I'll be right back!").then(Mono.fromRunnable<Void> {
+                                DB.mongo.close()
                                 sink.success(HarmonyEntryPoint.ExitSignal.RESTART)
                             })
                         }
@@ -113,6 +113,7 @@ class NucleusEntryPoint : HarmonyEntryPoint {
                         handle {
                             context.channel.createMessage("Mr. Stark, I don't feel so good...")
                                 .then(Mono.fromRunnable<Void> {
+                                    DB.mongo.close()
                                     sink.success(HarmonyEntryPoint.ExitSignal.COMPLETE_CLOSE)
                                 })
                         }
@@ -120,6 +121,7 @@ class NucleusEntryPoint : HarmonyEntryPoint {
                 }
             })
             .block()!!
+        return exit
     }
 
     override fun getToken(programArgs: Array<out String>): String {

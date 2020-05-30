@@ -7,7 +7,6 @@ import jep.JepException
 import jep.SharedInterpreter
 import nucleus.ConfigurablePrefixProvider
 import nucleus.util.PythonCommandContext
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -96,7 +95,7 @@ import java.util.concurrent.TimeUnit
 
 @BotOwnerOnly
 @Alias("python3")
-@Help("Runs a python snippet in a python3.7 interpreter.")
+@Help("Runs a python snippet in a python3.7 interpreter WIP.")
 @Command class PythonCommand {
 
     private fun prepareInterpreter(interpreter: SharedInterpreter, context: CommandContext) {

@@ -3,10 +3,8 @@ package nucleus.util
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.`object`.Region
 import discord4j.core.`object`.entity.Guild
-import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.Channel
-import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.event.domain.Event
 import discord4j.rest.util.Snowflake
 import harmony.Harmony
@@ -14,23 +12,22 @@ import harmony.command.CommandContext
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-// TODO
 data class PythonCommandContext(@JvmField val context: CommandContext) {
 
     @JvmField
     val client = PyClient(context.harmony, context.client)
 
     @JvmField
-    val message = PyMessage(context.message)
+    val message = context.message
 
     @JvmField
-    val channel = PyChannel(context.channel)
+    val channel = context.channel
 
     @JvmField
-    val author = PyUser(context.author)
+    val author = context.author
 
     @JvmField
-    val guild: PyGuild? = if (context.server == null) null else PyGuild(context.server!!)
+    val guild: Guild? = context.server
 
     fun snowflake(id: String) = Snowflake.of(id)
 }
@@ -59,25 +56,4 @@ data class PyClient(private val harmony: Harmony, private val discordClient: Gat
     fun guildById(id: Snowflake): Mono<Guild> = discordClient.getGuildById(id)
 
     fun userById(id: Snowflake): Mono<User> = discordClient.getUserById(id)
-}
-
-data class PyMessage(private val message: Message) {
-
-    @JvmField
-    val content = message.content
-
-    @JvmField
-    val id = message.id
-}
-
-data class PyChannel(private val channel: MessageChannel) {
-
-}
-
-data class PyUser(private val user: User) {
-
-}
-
-data class PyGuild(private val guild: Guild) {
-
 }
