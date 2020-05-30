@@ -1,7 +1,6 @@
 package nucleus
 
 import com.austinv11.servicer.WireService
-import com.github.benmanes.caffeine.cache.AsyncCache
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import discord4j.rest.util.Snowflake
@@ -11,16 +10,15 @@ import harmony.command.command
 import harmony.command.interfaces.HarmonyEntryPoint
 import harmony.command.interfaces.PrefixProvider
 import harmony.util.Feature
+import nucleus.commands.initializeChronicles
 import nucleus.util.DB
-import nucleus.util.fileExists
-import nucleus.util.open
 import reactor.core.publisher.Mono
+import java.time.Duration
 import java.util.*
-import kotlin.collections.HashMap
 
 // For testing
 fun main(args: Array<String>) {
-    Harmony(args[0], Feature.enable(CommandOptions())).awaitClose()
+    Harmony(args[0], Feature.enable(CommandOptions(prefix = ConfigurablePrefixProvider))).awaitClose()
 }
 
 const val DEFAULT_PREFIX = "?"
@@ -32,6 +30,7 @@ object ConfigurablePrefixProvider : PrefixProvider {
             .build()
     val dmPrefixCache: Cache<Long, Optional<String>> = Caffeine.newBuilder()
             .maximumSize(100)
+            .expireAfterAccess(Duration.ofMinutes(30)) // bots are less likely to be used consistently in dms
             .build()
 
     override fun getDmPrefix(authorId: Snowflake): Optional<String> {
@@ -81,6 +80,7 @@ class NucleusEntryPoint : HarmonyEntryPoint {
     }
 
     override fun startBot(harmony: Harmony): HarmonyEntryPoint.ExitSignal {
+        initializeChronicles(harmony).subscribe()
         harmony.owner.privateChannel.flatMap { it.createMessage("I've just started up!") }.subscribe()
 
         val exit = harmony.client.onDisconnect()
