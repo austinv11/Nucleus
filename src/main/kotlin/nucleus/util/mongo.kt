@@ -2,7 +2,7 @@ package nucleus.util
 
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoDatabase
-import discord4j.rest.util.Snowflake
+import discord4j.common.util.Snowflake
 import org.bson.codecs.pojo.annotations.BsonId
 import org.litote.kmongo.eq
 import org.litote.kmongo.match

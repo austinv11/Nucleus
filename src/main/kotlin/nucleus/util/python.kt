@@ -6,7 +6,7 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.Channel
 import discord4j.core.event.domain.Event
-import discord4j.rest.util.Snowflake
+import discord4j.common.util.Snowflake
 import harmony.Harmony
 import harmony.command.CommandContext
 import reactor.core.publisher.Flux

@@ -4,14 +4,14 @@ import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.rest.util.Permission
-import discord4j.rest.util.Snowflake
+import discord4j.common.util.Snowflake
+import discord4j.rest.util.Color
 import harmony.Harmony
 import harmony.command.CommandContext
 import harmony.command.annotations.*
 import nucleus.util.DB
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
-import java.awt.Color
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap

@@ -3,7 +3,10 @@ package nucleus
 import com.austinv11.servicer.WireService
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import discord4j.rest.util.Snowflake
+import discord4j.discordjson.json.gateway.StatusUpdate
+import discord4j.common.util.Snowflake
+import discord4j.core.`object`.presence.Activity
+import discord4j.core.`object`.presence.Presence
 import harmony.Harmony
 import harmony.command.CommandOptions
 import harmony.command.command
@@ -81,7 +84,14 @@ class NucleusEntryPoint : HarmonyEntryPoint {
 
     override fun startBot(harmony: Harmony): HarmonyEntryPoint.ExitSignal {
         initializeChronicles(harmony).subscribe()
-        harmony.owner.privateChannel.flatMap { it.createMessage("I've just started up!") }.subscribe()
+
+        harmony.owner.privateChannel
+                .flatMap { it.createMessage("I've just started up!") }
+                .delayElement(Duration.ofSeconds(5))
+                .doOnNext {
+                    harmony.status = Presence.online(Activity.playing("Type @${harmony.self.username} help"))
+                }
+                .subscribe()
 
         val exit = harmony.client.onDisconnect()
             .map { HarmonyEntryPoint.ExitSignal.COMPLETE_CLOSE }

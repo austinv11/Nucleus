@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation('com.github.austinv11:Harmony:5c1c8f7c') {
+    api('com.github.austinv11:Harmony:2fb8af89') {
         exclude group: 'com.austinv11.servicer', module: 'Servicer'
     }
     implementation 'black.ninia:jep:3.9.0'
@@ -25,7 +25,7 @@ dependencies {
     implementation 'com.github.ben-manes.caffeine:caffeine:2.8.4'
 
     //FIXME: Using jitpack excludes d4j for some reason?
-    implementation "com.discord4j:discord4j-core:3.1.0.M2"
+    api "com.discord4j.Discord4J:discord4j-core:2c5ab65"
 
     compileOnly 'com.austinv11.servicer:Servicer:1.0.2'
 
