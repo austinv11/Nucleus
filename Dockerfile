@@ -50,4 +50,4 @@ ENV PYTHONPATH /usr/local/lib/python3.7/dist-packages
 
 ARG token
 # FIXME: use args
-CMD ["java", "-jar", "nucleus.jar", "MjY0ODUzMzI0MjIwNzI3Mjk4.XsyKqg.KX1F-3LMSrFc02pLx96ME-9kJmQ"]
+CMD ["java", "-jar", "nucleus.jar", "$token"]
