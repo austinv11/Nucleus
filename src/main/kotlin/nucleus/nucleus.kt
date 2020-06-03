@@ -13,6 +13,7 @@ import harmony.command.command
 import harmony.command.interfaces.HarmonyEntryPoint
 import harmony.command.interfaces.PrefixProvider
 import harmony.util.Feature
+import nucleus.commands.Webhook
 import nucleus.commands.initializeChronicles
 import nucleus.util.DB
 import reactor.core.publisher.Mono
@@ -84,6 +85,8 @@ class NucleusEntryPoint : HarmonyEntryPoint {
 
     override fun startBot(harmony: Harmony): HarmonyEntryPoint.ExitSignal {
         initializeChronicles(harmony).subscribe()
+
+        val webhook = Webhook(harmony)
 
         harmony.owner.privateChannel
                 .flatMap { it.createMessage("I've just started up!") }
