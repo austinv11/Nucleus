@@ -71,7 +71,7 @@ class Webhook(val harmony: Harmony) {
     val sponsorshipAdapter = moshi.adapter(SponsorshipPayload::class.java)
 
     init {
-        app.get("/webhook") { ctx ->
+        app.post("/webhook") { ctx ->
             val sponsorship = sponsorshipAdapter.fromJson(ctx.body())!!
 
             harmony.client.getChannelById(Snowflake.of(ADMIN_CHANNEL))
