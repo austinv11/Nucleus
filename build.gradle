@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    api('com.github.austinv11:Harmony:2fb8af89') {
+    api('com.github.austinv11:Harmony:8af3bd1b') {
         exclude group: 'com.austinv11.servicer', module: 'Servicer'
     }
     implementation 'black.ninia:jep:3.9.0'
@@ -27,10 +27,10 @@ dependencies {
     //FIXME: Using jitpack excludes d4j for some reason?
     api "com.discord4j.Discord4J:discord4j-core:2c5ab65"
 
-    compileOnly 'com.austinv11.servicer:Servicer:1.0.2'
+    compileOnly 'com.austinv11.servicer:Servicer:1.0.3'
 
-    kapt 'com.github.austinv11:Harmony:5c1c8f7c'
-    kapt 'com.austinv11.servicer:Servicer:1.0.2'
+    kapt 'com.github.austinv11:Harmony:8af3bd1b'
+    kapt 'com.austinv11.servicer:Servicer:1.0.3'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }

@@ -5,6 +5,7 @@ import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.domain.guild.MemberJoinEvent
 import discord4j.rest.util.Permission
 import discord4j.common.util.Snowflake
+import discord4j.core.`object`.entity.Member
 import discord4j.rest.util.Color
 import harmony.Harmony
 import harmony.command.CommandContext
@@ -82,5 +83,37 @@ fun hookChronicle(harmony: Harmony, guildId: Snowflake, channel: MessageChannel)
                     "Nucleus Chronicle has been moved to this channel."
             })
         }
+    }
+}
+
+@OnlyIn(ChannelType.SERVER)
+@RequiresPermissions(Permission.ADMINISTRATOR)
+@Help("Bans a user from the server (this user need not be a current member).")
+@Command class BanCommand {
+
+    @Help("Bans a user from an ID.")
+    @Responder fun ban(context: CommandContext, @Help("The user id to ban") @Name("userId") id: Snowflake): Mono<String> {
+        return context.server!!.ban(id) {}.thenReturn("`${id.asString()}` has been banned!")
+    }
+
+    @Help("Bans a user from an ID.")
+    @Responder fun ban(context: CommandContext, @Help("The user id to ban") @Name("userId") id: Snowflake,
+                       @Help("The reason for the ban") @Name("reason") reason: String): Mono<String> {
+        return context.server!!.ban(id) {
+            it.reason = reason
+        }.thenReturn("`${id.asString()}` has been banned for `$reason`!")
+    }
+
+    @Help("Bans a current member.")
+    @Responder fun ban(context: CommandContext, @Help("The member to ban") @Name("member") member: Member): Mono<String> {
+        return context.server!!.ban(member.id) {}.thenReturn("${member.mention} has been banned!")
+    }
+
+    @Help("Bans a current member.")
+    @Responder fun ban(context: CommandContext, @Help("The member to ban") @Name("member") member: Member,
+                       @Help("The reason for the ban") @Name("reason") reason: String): Mono<String> {
+        return context.server!!.ban(member.id) {
+            it.reason = reason
+        }.thenReturn("${member.mention} has been banned for `$reason`!")
     }
 }

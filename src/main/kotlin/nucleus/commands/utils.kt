@@ -1,5 +1,6 @@
 package nucleus.commands
 
+import discord4j.rest.util.Image
 import discord4j.rest.util.Permission
 import harmony.command.CommandContext
 import harmony.command.annotations.*
@@ -92,6 +93,28 @@ import java.util.concurrent.TimeUnit
             return "Prefix has been cleared!"
     }
 }
+
+@BotOwnerOnly
+@Help("Sets the bot's avatar image.")
+@Command class AvatarCommand {
+
+    @Help("Sets the bot's avatar image.")
+    @Responder fun avatar(context: CommandContext, @Help("The url for the image.") @Name("avatar url") url: String): Mono<String> {
+        return Image.ofUrl(url).flatMap { image -> context.client.edit { it.setAvatar(image) } }.thenReturn("Done!")
+    }
+}
+
+
+@BotOwnerOnly
+@Help("Sets the bot's username.")
+@Command class RenameCommand {
+
+    @Help("Sets the bot's username.")
+    @Responder fun rename(context: CommandContext, @Help("The new username.") @Name("username") name: String): Mono<String> {
+        return context.client.edit { it.setUsername(name) }.thenReturn("Done!")
+    }
+}
+
 
 @BotOwnerOnly
 @Alias("python3")
